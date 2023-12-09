@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="TicTacToePlugin" type="rqt_tic_tac_toe.tic_tac_toe.TicTacToe" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin to play Tic-Tac-Toe.
+    </description>
+    <qtgui>
+      <group>
+        <label>Game</label>
+        <icon type="theme">applications-games</icon>
+        <statustip>Plugins related to games.</statustip>
+      </group>
+      <label>Tic-Tac-Toe</label>
+      <icon type="theme">face-smile</icon>
+      <statustip>A Python GUI plugin to play Tic-Tac-Toe.</statustip>
+    </qtgui>
+  </class>
+</library>
