@@ -18,8 +18,10 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from python_qt_binding import loadUi
+from python_qt_binding.QtCore import QTimer
 from python_qt_binding.QtWidgets import QWidget
 from rqt_gui_py.plugin import Plugin
+from rqt_tic_tac_toe.board_widget import BoardWidget
 
 
 class TicTacToe(Plugin):
@@ -34,13 +36,18 @@ class TicTacToe(Plugin):
         self._widget = QWidget()
         ui_file = os.path.join(get_package_share_directory('rqt_tic_tac_toe'),
                                'resource', 'TicTacToeWidget.ui')
-        loadUi(ui_file, self._widget)  # Need to set custom widget
+        loadUi(ui_file, self._widget, {'BoardWidget': BoardWidget})  # Need to set custom widget
 
         # Add widget to rqt window
         if context.serial_number() > 1:
             self._widget.setWindowTitle(
                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         context.add_widget(self._widget)
+
+        # Update board_widget at 60 Hz
+        self._timer = QTimer()
+        self._timer.timeout.connect(self._widget.BoardWidget.update)
+        self._timer.start(16)
 
     def shutdown_plugin(self):
         pass
