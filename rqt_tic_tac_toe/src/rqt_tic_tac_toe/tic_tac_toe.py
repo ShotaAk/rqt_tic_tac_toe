@@ -46,8 +46,10 @@ class TicTacToe(Plugin):
                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         context.add_widget(self._widget)
 
-        self._game = Game(board_size=3)
+        self._game = Game(board_size=3, first_marker=Marker.O)
         self._widget.BoardWidget.set_board_size(self._game.get_board_size())
+
+        self._widget.ResetButton.clicked.connect(self._reset_game)
 
         # Update board_widget at 60 Hz
         self._timer = QTimer()
@@ -77,3 +79,10 @@ class TicTacToe(Plugin):
         if clicked_pos[0] < 0 or clicked_pos[1] < 0:
             return
         self._game.set_marker(clicked_pos[0], clicked_pos[1])
+
+    def _reset_game(self):
+        self._game = self._game.create_new_game(board_size=3, first_marker=Marker.O)
+        self._widget.BoardWidget.set_board_size(self._game.get_board_size())
+        self._widget.BoardWidget.set_board_markers(self._game.get_board_markers())
+        self._widget.BoardWidget.reset_winner_line()
+

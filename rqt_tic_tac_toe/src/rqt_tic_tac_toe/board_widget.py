@@ -70,6 +70,9 @@ class BoardWidget(QWidget):
 
     def set_winner_line(self, winner_line: list) -> None:
         self._winner_line = winner_line
+    
+    def reset_winner_line(self) -> None:
+        self._winner_line = []
 
     def pop_mouse_clicked_pos(self) -> tuple[int, int]:
         INVALID_POS = (-1, -1)
@@ -105,22 +108,22 @@ class BoardWidget(QWidget):
     def _draw_board(self, painter: QPainter) -> None:
         COLOR_BACKGROUND = QColor('black')
         COLOR_LINE = QColor('white')
+        LINE_SIZE = self._to_line_size(2)
 
         # Draw the board
         painter.setBrush(COLOR_BACKGROUND)
         rect = QRectF(QPointF(0.0, 0.0), self._board_area_size)
         painter.drawRect(rect)
 
+        painter.setPen(QPen(COLOR_LINE, LINE_SIZE))
         for i in range(self._board_size - 1):
             # Draw horizontal lines
-            painter.setPen(COLOR_LINE)
             painter.drawLine(
                 QPointF(0.0, (i + 1) * self._board_area_size.height() / self._board_size),
                 QPointF(self._board_area_size.width(), (i + 1) * self._board_area_size.height() / self._board_size)
             )
 
             # Draw vertical lines
-            painter.setPen(QColor('white'))
             painter.drawLine(
                 QPointF((i + 1) * self._board_area_size.width() / self._board_size, 0.0),
                 QPointF((i + 1) * self._board_area_size.width() / self._board_size, self._board_area_size.height())
