@@ -55,6 +55,8 @@ class TicTacToe(Plugin):
         self._widget.ResetButton.clicked.connect(self._reset_game)
 
         self._command_publisher = self._node.create_publisher(Command, 'tic_tac_toe/command', 10)
+        self._command_subscription = self._node.create_subscription(
+            Command, 'tic_tac_toe/command', self._command_callback, 10)
 
         # Update board_widget at 60 Hz
         self._timer = QTimer()
@@ -88,8 +90,10 @@ class TicTacToe(Plugin):
         clicked_pos = self._widget.BoardWidget.pop_mouse_clicked_pos()
         if clicked_pos[0] < 0 or clicked_pos[1] < 0:
             return
-        self._publish_command(clicked_pos[0], clicked_pos[1], self._game.get_present_marker())
-        self._game.set_marker(clicked_pos[0], clicked_pos[1])
+        present_marker = self._game.get_present_marker()
+        if self._game.set_marker(clicked_pos[0], clicked_pos[1]):
+            self._publish_command(clicked_pos[0], clicked_pos[1], present_marker)
+
 
     def _game_status_text(self):
         winner, winner_line = self._game.calc_winner()
@@ -112,6 +116,10 @@ class TicTacToe(Plugin):
         self._widget.BoardWidget.reset_winner_line()
         self._widget.BoardWidget.pop_mouse_clicked_pos()
 
+    def _append_sync_id(self, frame_id: str) -> str:
+        if self._widget.SyncIDComboBox.findText(frame_id) < 0:
+            self._widget.SyncIDComboBox.addItem(frame_id)
+
     def _publish_command(self, row: int, col: int, marker: Marker):
         command = Command()
         command.header.stamp = self._node.get_clock().now().to_msg()
@@ -120,3 +128,12 @@ class TicTacToe(Plugin):
         command.column = col
         command.marker = marker
         self._command_publisher.publish(command)
+
+    def _command_callback(self, command: Command):
+        if command.header.frame_id != self._widget.FrameIDLineEdit.text() and \
+           command.header.frame_id != '':
+            self._append_sync_id(command.header.frame_id)
+
+        if command.header.frame_id == self._widget.SyncIDComboBox.currentText():
+            if command.marker == self._game.get_present_marker():
+                self._game.set_marker(command.row, command.column)
