@@ -53,8 +53,9 @@ class TicTacToe(Plugin):
 
         # Update board_widget at 60 Hz
         self._timer = QTimer()
-        self._timer.timeout.connect(self._game_update)
+        self._timer.timeout.connect(self._update_game)
         self._timer.timeout.connect(self._widget.BoardWidget.update)
+        self._timer.timeout.connect(self._update_ui)
         self._timer.start(16)
 
     def shutdown_plugin(self):
@@ -66,7 +67,11 @@ class TicTacToe(Plugin):
     def restore_settings(self, plugin_settings, instance_settings):
         pass
 
-    def _game_update(self):
+    def _update_ui(self):
+        self._widget.GameStatusLabel.setText(
+            self._game_status_text())
+
+    def _update_game(self):
         winner, winner_line = self._game.calc_winner()
         if winner != Marker.NONE:
             self._widget.BoardWidget.set_winner_line(winner_line)
@@ -80,9 +85,22 @@ class TicTacToe(Plugin):
             return
         self._game.set_marker(clicked_pos[0], clicked_pos[1])
 
+    def _game_status_text(self):
+        winner, winner_line = self._game.calc_winner()
+        if winner != Marker.NONE:
+            return 'Winner: {}'.format(winner)
+
+        if self._game.board_is_full():
+            return 'Draw'
+
+        present_marker = self._game.get_present_marker()
+
+        return 'Present: {}'.format(present_marker)
+
     def _reset_game(self):
         self._game = self._game.create_new_game(board_size=3, first_marker=Marker.O)
         self._widget.BoardWidget.set_board_size(self._game.get_board_size())
         self._widget.BoardWidget.set_board_markers(self._game.get_board_markers())
         self._widget.BoardWidget.reset_winner_line()
+        self._widget.BoardWidget.pop_mouse_clicked_pos()
 
