@@ -16,6 +16,7 @@ https://github.com/ShotaAk/rqt_tic_tac_toe/assets/18494952/0dfd166d-ec24-4818-8b
 ```sh
 cd ~/ros2_ws/src
 git clone https://github.com/ShotaAk/rqt_tic_tac_toe.git
+rosdep install -r -y -i --from-paths .
 
 cd ~/ros2_ws
 colcon build --symlink-install
