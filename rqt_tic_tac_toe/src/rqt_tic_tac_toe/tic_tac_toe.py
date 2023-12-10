@@ -22,6 +22,8 @@ from python_qt_binding.QtCore import QTimer
 from python_qt_binding.QtWidgets import QWidget
 from rqt_gui_py.plugin import Plugin
 from rqt_tic_tac_toe.board_widget import BoardWidget
+from rqt_tic_tac_toe.game import Game
+from rqt_tic_tac_toe_msgs.msg import Marker
 
 
 class TicTacToe(Plugin):
@@ -44,8 +46,12 @@ class TicTacToe(Plugin):
                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         context.add_widget(self._widget)
 
+        self._game = Game(board_size=3)
+        self._widget.BoardWidget.set_board_size(self._game.get_board_size())
+
         # Update board_widget at 60 Hz
         self._timer = QTimer()
+        self._timer.timeout.connect(self._game_update)
         self._timer.timeout.connect(self._widget.BoardWidget.update)
         self._timer.start(16)
 
@@ -57,3 +63,17 @@ class TicTacToe(Plugin):
 
     def restore_settings(self, plugin_settings, instance_settings):
         pass
+
+    def _game_update(self):
+        winner, winner_line = self._game.calc_winner()
+        if winner != Marker.NONE:
+            self._widget.BoardWidget.set_winner_line(winner_line)
+        self._widget.BoardWidget.set_board_markers(self._game.get_board_markers())
+
+        if winner != Marker.NONE or self._game.board_is_full():
+            return
+
+        clicked_pos = self._widget.BoardWidget.pop_mouse_clicked_pos()
+        if clicked_pos[0] < 0 or clicked_pos[1] < 0:
+            return
+        self._game.set_marker(clicked_pos[0], clicked_pos[1])
