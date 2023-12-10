@@ -24,6 +24,7 @@ from rqt_gui_py.plugin import Plugin
 from rqt_tic_tac_toe.board_widget import BoardWidget
 from rqt_tic_tac_toe.game import Game
 from rqt_tic_tac_toe_msgs.msg import Command
+from rqt_tic_tac_toe_msgs.msg import CursorPos
 from rqt_tic_tac_toe_msgs.msg import Marker
 
 
@@ -55,14 +56,18 @@ class TicTacToe(Plugin):
         self._widget.ResetButton.clicked.connect(self._reset_game)
 
         self._command_publisher = self._node.create_publisher(Command, 'tic_tac_toe/command', 10)
+        self._cursor_pos_publisher = self._node.create_publisher(CursorPos, 'tic_tac_toe/cursor_pos', 10)
         self._command_subscription = self._node.create_subscription(
             Command, 'tic_tac_toe/command', self._command_callback, 10)
+        self._cursor_pos_subscription = self._node.create_subscription(
+            CursorPos, 'tic_tac_toe/cursor_pos', self._cursor_pos_callback, 10)
 
         # Update board_widget at 60 Hz
         self._timer = QTimer()
         self._timer.timeout.connect(self._update_game)
         self._timer.timeout.connect(self._widget.BoardWidget.update)
         self._timer.timeout.connect(self._update_ui)
+        self._timer.timeout.connect(self._publish_cursor_pos)
         self._timer.start(16)
 
     def shutdown_plugin(self):
@@ -94,7 +99,6 @@ class TicTacToe(Plugin):
         if self._game.set_marker(clicked_pos[0], clicked_pos[1]):
             self._publish_command(clicked_pos[0], clicked_pos[1], present_marker)
 
-
     def _game_status_text(self):
         winner, winner_line = self._game.calc_winner()
         if winner != Marker.NONE:
@@ -115,6 +119,7 @@ class TicTacToe(Plugin):
         self._widget.BoardWidget.set_board_markers(self._game.get_board_markers())
         self._widget.BoardWidget.reset_winner_line()
         self._widget.BoardWidget.pop_mouse_clicked_pos()
+        self._widget.BoardWidget.reset_sync_mouse_cursor_pos()
 
     def _append_sync_id(self, frame_id: str) -> str:
         if self._widget.SyncIDComboBox.findText(frame_id) < 0:
@@ -134,6 +139,28 @@ class TicTacToe(Plugin):
            command.header.frame_id != '':
             self._append_sync_id(command.header.frame_id)
 
-        if command.header.frame_id == self._widget.SyncIDComboBox.currentText():
-            if command.marker == self._game.get_present_marker():
-                self._game.set_marker(command.row, command.column)
+        if command.header.frame_id != self._widget.SyncIDComboBox.currentText():
+            return
+
+        if command.marker != self._game.get_present_marker():
+            return
+
+        winner, _ = self._game.calc_winner()
+        if winner != Marker.NONE:
+            return
+
+        # Sync command
+        self._game.set_marker(command.row, command.column)
+
+    def _publish_cursor_pos(self):
+        pos = self._widget.BoardWidget.get_mouse_present_pos()
+        cursor_pos = CursorPos()
+        cursor_pos.header.stamp = self._node.get_clock().now().to_msg()
+        cursor_pos.header.frame_id = self._widget.FrameIDLineEdit.text()
+        cursor_pos.x = pos[0]
+        cursor_pos.y = pos[1]
+        self._cursor_pos_publisher.publish(cursor_pos)
+
+    def _cursor_pos_callback(self, pos: CursorPos):
+        if pos.header.frame_id == self._widget.SyncIDComboBox.currentText():
+            self._widget.BoardWidget.set_sync_mouse_cursor_pos((pos.x, pos.y))

@@ -38,10 +38,14 @@ class BoardWidget(QWidget):
 
         self._board_area_size = QSizeF(self.rect().size()) 
         self._mouse_clicked_point = self._INVALID_POINT
+        self._mouse_present_point = QPointF(0.0, 0.0)
 
         self._board_size = 3
         self._board_markers = numpy.full((self._board_size, self._board_size), Marker.NONE)
         self._winner_line = []
+        self._sync_mouse_cursor_pos = None
+
+        self.setMouseTracking(True)
 
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
@@ -55,12 +59,18 @@ class BoardWidget(QWidget):
         if self._winner_line:
             self._draw_winner_line(painter)
 
+        if self._sync_mouse_cursor_pos:
+            self._draw_sync_mouse_cursor(painter)
+
     def resizeEvent(self, event) -> None:
         self._resize_board_area()
 
     def mousePressEvent(self, event):
         if event.buttons() == Qt.LeftButton:
             self._mouse_clicked_point = event.localPos()
+
+    def mouseMoveEvent(self, event):
+        self._mouse_present_point = event.localPos()
 
     def set_board_size(self, board_size: int) -> None:
         self._board_size = board_size
@@ -70,9 +80,22 @@ class BoardWidget(QWidget):
 
     def set_winner_line(self, winner_line: list) -> None:
         self._winner_line = winner_line
-    
+
     def reset_winner_line(self) -> None:
         self._winner_line = []
+
+    def set_sync_mouse_cursor_pos(self, sync_mouse_cursor_pos: tuple[float, float]) -> None:
+        self._sync_mouse_cursor_pos = sync_mouse_cursor_pos
+
+    def reset_sync_mouse_cursor_pos(self) -> None:
+        self._sync_mouse_cursor_pos = None
+
+    def get_mouse_present_pos(self) -> tuple[float, float]:
+        pos_x = (self._mouse_present_point.x() / self._board_area_size.width())
+        pos_y = (self._mouse_present_point.y() / self._board_area_size.height())
+        pos_x = min(max(pos_x, 0.0), 1.0)
+        pos_y = min(max(pos_y, 0.0), 1.0)
+        return pos_x, pos_y
 
     def pop_mouse_clicked_pos(self) -> tuple[int, int]:
         INVALID_POS = (-1, -1)
@@ -187,3 +210,20 @@ class BoardWidget(QWidget):
         start = self._to_center_of_block(self._winner_line[0][0], self._winner_line[0][1])
         end = self._to_center_of_block(self._winner_line[1][0], self._winner_line[1][1])
         painter.drawLine(start, end)
+
+    def _draw_sync_mouse_cursor(self, painter: QPainter) -> None:
+        COLOR_LINE = QColor('chartreuse')
+        COLOR_LINE.setAlphaF(0.8)
+        COLOR_FILL = QColor('chartreuse')
+        COLOR_FILL.setAlphaF(0.8)
+        LINE_SIZE = self._to_line_size(10)
+
+        painter.setPen(QPen(COLOR_LINE, LINE_SIZE))
+        painter.setBrush(COLOR_FILL)
+
+        center = QPointF(
+            self._sync_mouse_cursor_pos[0] * self._board_area_size.width(),
+            self._sync_mouse_cursor_pos[1] * self._board_area_size.height()
+        )
+        radius = self._board_area_size.width() / self._board_size / 2.0
+        painter.drawEllipse(center, radius, radius)

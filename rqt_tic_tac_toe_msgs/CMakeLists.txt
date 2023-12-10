@@ -7,6 +7,7 @@ find_package(std_msgs REQUIRED)
 
 set(msg_files
   "msg/Command.msg"
+  "msg/CursorPos.msg"
   "msg/Marker.msg"
 )
 
