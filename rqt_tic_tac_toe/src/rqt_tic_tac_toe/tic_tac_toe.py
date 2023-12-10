@@ -46,7 +46,9 @@ class TicTacToe(Plugin):
                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         context.add_widget(self._widget)
 
-        self._game = Game(board_size=3, first_marker=Marker.O)
+        self._game = Game(
+            board_size=self._widget.BoardSizeSpinBox.value(),
+            first_marker=Marker.O)
         self._widget.BoardWidget.set_board_size(self._game.get_board_size())
 
         self._widget.ResetButton.clicked.connect(self._reset_game)
@@ -98,7 +100,9 @@ class TicTacToe(Plugin):
         return 'Present: {}'.format(present_marker)
 
     def _reset_game(self):
-        self._game = self._game.create_new_game(board_size=3, first_marker=Marker.O)
+        self._game = self._game.create_new_game(
+            board_size=self._widget.BoardSizeSpinBox.value(),
+            first_marker=Marker.O)
         self._widget.BoardWidget.set_board_size(self._game.get_board_size())
         self._widget.BoardWidget.set_board_markers(self._game.get_board_markers())
         self._widget.BoardWidget.reset_winner_line()
