@@ -19,6 +19,7 @@ from python_qt_binding.QtCore import QSizeF
 from python_qt_binding.QtGui import QColor
 from python_qt_binding.QtGui import QPainter
 from python_qt_binding.QtWidgets import QWidget
+from rqt_tic_tac_toe.game import Game
 
 
 class BoardWidget(QWidget):
@@ -27,6 +28,7 @@ class BoardWidget(QWidget):
         super(BoardWidget, self).__init__(parent)
 
         self._board_area_size = QSizeF(self.rect().size()) 
+        self._game = Game()
 
 
     def paintEvent(self, event) -> None:
