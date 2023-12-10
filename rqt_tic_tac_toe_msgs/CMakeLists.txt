@@ -6,7 +6,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 
 set(msg_files
-  "msg/Board.msg"
+  "msg/Command.msg"
   "msg/Marker.msg"
 )
 

@@ -23,6 +23,7 @@ from python_qt_binding.QtWidgets import QWidget
 from rqt_gui_py.plugin import Plugin
 from rqt_tic_tac_toe.board_widget import BoardWidget
 from rqt_tic_tac_toe.game import Game
+from rqt_tic_tac_toe_msgs.msg import Command
 from rqt_tic_tac_toe_msgs.msg import Marker
 
 
@@ -52,6 +53,8 @@ class TicTacToe(Plugin):
         self._widget.BoardWidget.set_board_size(self._game.get_board_size())
 
         self._widget.ResetButton.clicked.connect(self._reset_game)
+
+        self._command_publisher = self._node.create_publisher(Command, 'tic_tac_toe/command', 10)
 
         # Update board_widget at 60 Hz
         self._timer = QTimer()
@@ -85,6 +88,7 @@ class TicTacToe(Plugin):
         clicked_pos = self._widget.BoardWidget.pop_mouse_clicked_pos()
         if clicked_pos[0] < 0 or clicked_pos[1] < 0:
             return
+        self._publish_command(clicked_pos[0], clicked_pos[1], self._game.get_present_marker())
         self._game.set_marker(clicked_pos[0], clicked_pos[1])
 
     def _game_status_text(self):
@@ -108,3 +112,11 @@ class TicTacToe(Plugin):
         self._widget.BoardWidget.reset_winner_line()
         self._widget.BoardWidget.pop_mouse_clicked_pos()
 
+    def _publish_command(self, row: int, col: int, marker: Marker):
+        command = Command()
+        command.header.stamp = self._node.get_clock().now().to_msg()
+        command.header.frame_id = self._widget.FrameIDLineEdit.text()
+        command.row = row
+        command.column = col
+        command.marker = marker
+        self._command_publisher.publish(command)

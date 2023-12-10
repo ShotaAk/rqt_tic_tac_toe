@@ -20,7 +20,7 @@ class Game():
 
     def __init__(self, board_size: int = 3,
                  markers: list = [Marker.O, Marker.X],
-                 first_marker: Marker = Marker.O):
+                 first_marker: int = Marker.O):
 
         self._BOARD_SIZE = max(board_size, 2)
         self._MARKERS = markers
@@ -28,7 +28,7 @@ class Game():
         self._board = numpy.full((self._BOARD_SIZE, self._BOARD_SIZE), Marker.NONE)
         self._present_marker = first_marker
 
-    def create_new_game(self, board_size: int, first_marker: Marker) -> 'Game':
+    def create_new_game(self, board_size: int, first_marker: int) -> 'Game':
         return Game(board_size, self._MARKERS, first_marker)
 
     def get_board_size(self) -> int:
@@ -37,7 +37,7 @@ class Game():
     def get_board_markers(self) -> numpy.ndarray:
         return self._board
 
-    def get_present_marker(self) -> Marker:
+    def get_present_marker(self) -> int:
         return self._present_marker
 
     def set_marker(self, row: int, col: int) -> bool:
@@ -56,7 +56,7 @@ class Game():
     def board_is_full(self) -> bool:
         return bool(numpy.all(self._board != Marker.NONE))
 
-    def calc_winner(self) -> tuple[Marker, list]:
+    def calc_winner(self) -> tuple[int, list]:
         winner_line = []  # Start and end positions of the winner line
 
         # Check rows
